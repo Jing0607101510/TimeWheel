@@ -24,9 +24,9 @@ namespace timer {
             void AppendTimeWheel(uint64_t slot_count, uint64_t time_unit);
 
         private:
-            const uint64_t create_time_;
             std::vector<TimeWheelPtr> time_wheels_;
             std::unordered_set<uint64_t> timers_del_;
+            uint64_t cur_time_wheel_time_; // 多级时间轮所代表的时间。这个时间可能滞后于真正的当前时间
     };
 }
 

@@ -8,6 +8,7 @@ namespace timer {
         task_ = task;
         expired_time_ = expired_time;
         interval_time_ = interval_time;
+        round_count_ = 0;
 
         timer_id_generator_++;
         id_ = timer_id_generator_;
@@ -42,5 +43,15 @@ namespace timer {
 
     void Timer::UpdateExpiredTime() {
         expired_time_ += interval_time_;
+    }
+
+    void Timer::SetRoundCount(uint32_t round_count) {
+        round_count_ = round_count;
+    }
+
+    void Timer::Run() {
+        if(task_) {
+            task_();
+        }
     }
 }

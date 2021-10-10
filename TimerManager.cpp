@@ -7,7 +7,9 @@
 
 namespace timer {
 
-    TimerManager::TimerManager() : create_time_(GetTimeStampNow()) {}
+    TimerManager::TimerManager()
+        : cur_time_wheel_time_(timer::GetTimeStampNow()) {
+        }
 
     void TimerManager::AddTimerAt(TimerTask task, uint64_t time, uint64_t interval) {
         std::shared_ptr<Timer> timer_ptr = std::make_shared<Timer>(task, time, interval);
@@ -15,7 +17,7 @@ namespace timer {
             throw TimeWheelNotExistException();
         }
         else {
-            time_wheels_.back()->AddTimer(timer_ptr);
+            time_wheels_.back()->AddTimer(timer_ptr, cur_time_wheel_time_);
         }
     }
 
@@ -55,7 +57,7 @@ namespace timer {
     }
 
     void TimerManager::AppendTimeWheel(uint64_t slot_count, uint64_t time_unit) {
-        TimeWheelPtr time_wheel_ptr = std::make_shared<TimeWheel>(create_time_, slot_count, time_unit);
+        TimeWheelPtr time_wheel_ptr = std::make_shared<TimeWheel>(slot_count, time_unit);
         
         if(!time_wheels_.empty()) {
             TimeWheelPtr last_time_wheel_ptr = time_wheels_.back();
@@ -66,7 +68,7 @@ namespace timer {
         time_wheels_.emplace_back(time_wheel_ptr);
     }
 
-    void Tick() {
+    void TimerManager::Tick() {
         if(time_wheels_.empty()) {
             throw TimeWheelNotExistException();
         }
@@ -75,11 +77,26 @@ namespace timer {
         TimeWheelPtr driving_time_wheel_ptr = time_wheels_.front();
         uint32_t driving_tw_time_unit = driving_time_wheel_ptr->GetTimeUnit();
 
-        while(true) {
-            // TODO:
+        uint64_t check_time = cur_time_wheel_time_ + driving_tw_time_unit;
+
+        while(check_time <= now) {
+            for(const TimerPtr& timer_ptr : driving_time_wheel_ptr->GetAndClearCurrentSlot()) {
+                if(timers_del_.find(timer_ptr->GetId()) != timers_del_.end()) {
+                    timers_del_.erase(timer_ptr->GetId());
+                    continue;
+                }
+                
+                timer_ptr->Run();
+
+                if(timer_ptr->IsRepeat()) {
+                    timer_ptr->UpdateExpiredTime();
+                    time_wheels_.back()->AddTimer(timer_ptr, cur_time_wheel_time_);
+                }
+            }
+
+            cur_time_wheel_time_ += driving_tw_time_unit;
+            check_time += driving_tw_time_unit;
+            driving_time_wheel_ptr->TickOne(cur_time_wheel_time_);
         }
     }
-
-    std::vector<TimeWheelPtr> time_wheels_;
-    std::unordered_set<uint64_t> timers_del_;
 }

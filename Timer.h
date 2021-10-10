@@ -16,8 +16,10 @@ namespace timer {
             void SetIntervalTime(uint64_t interval_time);
             uint64_t GetExpiredTime() const;
             void UpdateExpiredTime();
+            void SetRoundCount(uint32_t round_count);
+            void Run();
             
-        public:
+        private:
             static uint64_t timer_id_generator_;
 
             TimerTask task_;
@@ -25,6 +27,7 @@ namespace timer {
             uint64_t expired_time_;
             uint64_t interval_time_;
             uint64_t id_;  
+            uint32_t round_count_;
     };
 }
 
