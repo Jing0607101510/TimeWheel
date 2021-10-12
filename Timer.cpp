@@ -4,7 +4,7 @@ namespace timer {
 
     uint64_t Timer::timer_id_generator_ = 0;
 
-    Timer::Timer(TimerTask task, uint64_t expired_time, uint64_t interval_time=0) {
+    Timer::Timer(TimerTask task, uint64_t expired_time, uint64_t interval_time) {
         task_ = task;
         expired_time_ = expired_time;
         interval_time_ = interval_time;
@@ -47,6 +47,10 @@ namespace timer {
 
     void Timer::SetRoundCount(uint32_t round_count) {
         round_count_ = round_count;
+    }
+
+    uint32_t Timer::GetRoundCount() {
+        return round_count_;
     }
 
     void Timer::Run() {

@@ -24,6 +24,7 @@ namespace timer {
             void AddTimer(TimerPtr timer_ptr, uint64_t cur_time_wheel_time);
             void TickOne(uint64_t new_cur_time_wheel_time);
             uint64_t GetCurrentTime();
+            void AddTimerAtCurrentSlot(TimerPtr timer_ptr);
 
         private:
             uint32_t cur_idx_;

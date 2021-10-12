@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include "TimeWheel.h"
+#include "Timer.h"
 
 namespace timer {
 

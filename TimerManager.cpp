@@ -85,6 +85,12 @@ namespace timer {
                     timers_del_.erase(timer_ptr->GetId());
                     continue;
                 }
+
+                if(timer_ptr->GetRoundCount() > 0) {
+                    timer_ptr->SetRoundCount(timer_ptr->GetRoundCount() - 1);
+                    driving_time_wheel_ptr->AddTimerAtCurrentSlot(timer_ptr);
+                    continue;
+                }
                 
                 timer_ptr->Run();
 

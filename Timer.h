@@ -17,6 +17,7 @@ namespace timer {
             uint64_t GetExpiredTime() const;
             void UpdateExpiredTime();
             void SetRoundCount(uint32_t round_count);
+            uint32_t GetRoundCount();
             void Run();
             
         private:

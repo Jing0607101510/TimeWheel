@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "TimeWheel.h"
 #include "Timer.h"
 #include "Utils.h"
@@ -29,6 +31,8 @@ namespace timer {
 
     void TimeWheel::AddTimer(TimerPtr timer_ptr, uint64_t cur_time_wheel_time) {
         if(timer_ptr) {
+            timer_ptr->SetRoundCount(0);
+
             uint64_t expired_time = timer_ptr->GetExpiredTime();
 
             if(expired_time <= cur_time_wheel_time) {
@@ -52,6 +56,9 @@ namespace timer {
             if(relative_time >= time_unit_) {
                 uint32_t round_count = relative_time / total_time_scale_;
                 uint32_t slot_position = (cur_idx_ + relative_time / time_unit_) % slot_count_;
+                if(slot_position == cur_idx_ && !sub_time_wheel_.expired()) {
+                    round_count -= 1;
+                }
                 timer_ptr->SetRoundCount(round_count);
                 slots_[slot_position].push_back(timer_ptr);
                 return;
@@ -69,6 +76,12 @@ namespace timer {
     }
 
     std::list<TimerPtr> TimeWheel::GetAndClearCurrentSlot() {
+        if(sub_time_wheel_.expired()) {
+            // std::cout << "driving slots idx size:" << slots_[cur_idx_].size() << std::endl;
+        }
+        else {
+            // std::cout << "other slots idx size:" << slots_[cur_idx_].size() << std::endl;
+        }
         std::list<TimerPtr> timers;
         timers.swap(slots_[cur_idx_]);
         return timers;
@@ -87,7 +100,13 @@ namespace timer {
             TimeWheelPtr sub_time_wheel_ptr = sub_time_wheel_.lock();
             std::list<TimerPtr> timer_ptrs = GetAndClearCurrentSlot();
             for(const TimerPtr& timer_ptr : timer_ptrs) {
-                sub_time_wheel_ptr->AddTimer(timer_ptr, new_cur_time_wheel_time);
+                if(timer_ptr->GetRoundCount() == 0) {
+                    sub_time_wheel_ptr->AddTimer(timer_ptr, new_cur_time_wheel_time);
+                }
+                else {
+                    timer_ptr->SetRoundCount(timer_ptr->GetRoundCount() - 1);
+                    slots_[cur_idx_].push_back(timer_ptr);
+                }
             }
         }
     }
@@ -100,14 +119,7 @@ namespace timer {
         return current_time;
     }
 
-    const uint64_t wheel_create_time_;
-    
-    uint32_t cur_idx_;
-    uint32_t time_unit_;
-    uint32_t slot_count_;
-    
-    std::shared_ptr<TimeWheel> parent_time_wheel_;
-    std::weak_ptr<TimeWheel> sub_time_wheel_;
-
-    std::vector<std::list<TimerPtr>> slots_;
+    void TimeWheel::AddTimerAtCurrentSlot(TimerPtr timer_ptr) {
+        slots_[cur_idx_].push_back(timer_ptr);
+    }
 }
