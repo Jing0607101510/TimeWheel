@@ -56,6 +56,11 @@ namespace timer {
             if(relative_time >= time_unit_) {
                 uint32_t round_count = relative_time / total_time_scale_;
                 uint32_t slot_position = (cur_idx_ + relative_time / time_unit_) % slot_count_;
+                // bug has fixed, reason: 非驱动轮（即刻度单位最小的轮）的cur_idx_所指向的slot上
+                // 的所有timer已经被分配到下一级的时间轮中了。也就是这个时间轮上的cur_idx_所指向的slot已经被处理，
+                // 如果此时刚好有一个新的timer需要插入到cur_idx_所指向的slot，那么它的round_count就应该减去1，
+                // 因为cur_idx_在指向该slot的时候，slot上的timer的被处理，那么新插入的timer的round_count对应减去1
+                // 如果新的timer插入的位置不是cur_idx_，那么它的round_count不受影响
                 if(slot_position == cur_idx_ && !sub_time_wheel_.expired()) {
                     round_count -= 1;
                 }
@@ -76,12 +81,6 @@ namespace timer {
     }
 
     std::list<TimerPtr> TimeWheel::GetAndClearCurrentSlot() {
-        if(sub_time_wheel_.expired()) {
-            // std::cout << "driving slots idx size:" << slots_[cur_idx_].size() << std::endl;
-        }
-        else {
-            // std::cout << "other slots idx size:" << slots_[cur_idx_].size() << std::endl;
-        }
         std::list<TimerPtr> timers;
         timers.swap(slots_[cur_idx_]);
         return timers;
